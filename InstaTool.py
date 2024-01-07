@@ -285,7 +285,7 @@ def executeAnalysis():
 window = tk.Tk()
 window.geometry("750x580")
 window.title("Insta tool")
-window.resizable(False, False)
+window.resizable(True, True)
 window.configure(background=colour_bg)
 
 try:
@@ -296,7 +296,7 @@ else:
     window.iconphoto(False,icon)
 
 #Instructions
-title = tk.Label(master=window,text="Welcome to Insta-Tool",fg=colour_text_error,bg=colour_bg,font=("Arial", 14))
+title = tk.Label(master=window,text="Insta-Tool",fg=colour_text_error,bg=colour_bg,font=("Arial", 14))
 title.pack(side=tk.TOP)
 text = tk.Label(master=window,text="To run the program you need to login to your Instagram account using the Firefox web browser\n"+
                     "-In the 'Logged username' box you need to insert your username\n"+
@@ -311,13 +311,13 @@ frame_input.pack(side = tk.TOP,pady=15,fill=tk.Y)
 text_nomeUtenteLoginato = tk.Label(frame_input, text="Logged username:",bg=colour_bg2,fg=colour_text, font=("Arial", 11))
 text_nomeUtenteLoginato.grid(row=0,column=0,pady=3, padx=3)
 box_nomeUtenteLoginato = tk.Text(frame_input, height = 1, width = 20)
-box_nomeUtenteLoginato.insert(0.0,"francescobittasi")
+box_nomeUtenteLoginato.insert(0.0,"insert username")
 box_nomeUtenteLoginato.grid(row=0,column=1,pady=3,padx = 5)
 
 text_nomeUtenteDaAnalizzare = tk.Label(frame_input, text="Username to analyze:",bg=colour_bg2,fg=colour_text, font=("Arial", 11))
 text_nomeUtenteDaAnalizzare.grid(row=1,column=0,pady=3,padx=3)
 box_nomeUtenteDaAnalizzare = tk.Text(frame_input, height = 1, width = 20)
-box_nomeUtenteDaAnalizzare.insert(0.0,"francescobittasi")
+box_nomeUtenteDaAnalizzare.insert(0.0,"insert username")
 box_nomeUtenteDaAnalizzare.grid(row=1,column=1,pady=3,padx = 5)
 
 # button to start the analysis
@@ -370,7 +370,7 @@ list2.pack(side = tk.LEFT)
 list2_scrollbar.pack(side = tk.RIGHT,  fill = tk.Y )
 
 # credits
-crediti = tk.Label(window,text="2023 CC BY-SA Francesco Bittasi")
+crediti = tk.Label(window,text="2024 Francesco Bittasi")
 crediti.pack(side = tk.RIGHT)
 
 # main loop (runs the program)
