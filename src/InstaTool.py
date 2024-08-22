@@ -1,5 +1,6 @@
 import instaloader
 import tkinter as tk
+import sys
 
 # name of the generated files
 BASE_nomeFileElencoFollowees = "Followees_list"
@@ -288,6 +289,8 @@ window.title("Insta tool")
 window.resizable(True, True)
 window.configure(background=colour_bg)
 
+print(sys._MEIPASS)
+
 try:
     icon = tk.PhotoImage(file = 'InstaTool_icon.png')
 except:
@@ -377,4 +380,4 @@ crediti.pack(side = tk.RIGHT)
 if __name__ == "__main__":
     window.mainloop()
 
-#pyinstaller --name InstaTool --onefile --windowed --icon=InstaTool_icon.ico main.py
+# pyinstaller --name InstaTool --onefile --windowed --icon=resources/InstaTool_icon.ico src/InstaTool.py
