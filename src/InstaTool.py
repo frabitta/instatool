@@ -1,24 +1,4 @@
-import instaloader
-import tkinter as tk
-import sys
-import os
-
-# name of the generated files
-BASE_nomeFileElencoFollowees = "Followees_list"
-BASE_nomeFileElencoFollowers = "Followers_list"
-BASE_nomeFileOutputUnrequited = "Unrequited_list"
-BASE_nomeFileOutputFan = "Fan_list"
-
-# colours used
-colour_bg = "#F2F2F2"
-colour_bg2 = "#E3E3E3"
-colour_text = "#0B2027"
-colour_text_error = "red"
-colour_text_success = "#70A9A1"
-colour_azzurro = "#40798C"
-colour_arancione = "#F05D23"
-
-#SAVE SESSION ----------------------https://instaloader.github.io/troubleshooting.html
+#SAVE SESSION ---------------------- source: https://instaloader.github.io/troubleshooting.html
 from argparse import ArgumentParser
 from glob import glob
 from os.path import expanduser
@@ -40,9 +20,7 @@ def get_cookiefile():
         raise SystemExit("No Firefox cookies.sqlite file found. Use -c COOKIEFILE.")
     return cookiefiles[0]
 
-
-def import_session(cookiefile, sessionfile):
-#    print("Using cookies from {}.".format(cookiefile))
+def import_session(cookiefile):
     conn = connect(f"file:{cookiefile}?immutable=1", uri=True)
     try:
         cookie_data = conn.execute(
@@ -57,339 +35,162 @@ def import_session(cookiefile, sessionfile):
     username = instaloader.test_login()
     if not username:
         raise SystemExit("Not logged in. Are you logged in successfully in Firefox?")
-#    print("Imported session cookie for {}.".format(username))
     instaloader.context.username = username
-    instaloader.save_session_to_file(sessionfile)
+    instaloader.save_session_to_file()
 
 def saveSession():
-    if __name__ == "__main__":
-        p = ArgumentParser()
-        p.add_argument("-c", "--cookiefile")
-        p.add_argument("-f", "--sessionfile")
-        args = p.parse_args()
-        try:
-            import_session(args.cookiefile or get_cookiefile(), args.sessionfile)
-        except (ConnectionException, OperationalError) as e:
-            raise SystemExit("Cookie import failed: {}".format(e))
+    import_session(get_cookiefile())
 #END SAVE SESSION --------------------------------------------------------------
 
-#UTILITIES----------------------------------------------------------------------
-#takes a list and print that on a file with the name specified
-def writeListToFile(nomefile,lista,tot,text):
-    f = open(nomefile,"w")
-    i = 1
-    for x in lista:
-        f.write(str(x.username)+"\n")
-        perc = i/tot * 100
-        update.config(text = "Update: loading "+text+" list...  "+str(round(perc))+"%")
-        window.update()
-        i += 1
-    f.close()
+import instaloader
+import FileUtils
+import sys
 
-#prints every line of file2 that's not incuded in file1
-def compareFiles(nomeFile1,nomeFile2,nomeFileOutput):
-    file1 = open(nomeFile1,"r")
-    file2 = open(nomeFile2,"r")
-    list = file1.read()
-    fileOutput = open(nomeFileOutput,"w")
-    for line in file2:
-        if line not in list:
- #           print(line)
-            fileOutput.write(str(line))
-    file1.close()
-    file2.close()
-    fileOutput.close()
+# name of the generated files
+BASE_nomeFileElencoFollowees = "Followees_list"
+BASE_nomeFileElencoFollowers = "Followers_list"
+BASE_nomeFileOutputUnrequited = "Unrequited_list"
+BASE_nomeFileOutputFan = "Fan_list"
 
-#by reading the old file he updates the list with the names of the new users: new followers and new unfollows
-def compareFiles_forNewFollowUnfollow(nomeFile1,nomeFile2,list):
-    file1 = open(nomeFile1,"r")
-    file2 = open(nomeFile2,"r")
-    list_f1 = file1.read()
-    list.delete(0,tk.END)
-    for line in file2:
-        if line not in list_f1:
-            list.insert(tk.END, str(line))
-    file1.close()
-    file2.close()
+def getStatusCodes():
+    return statusCodes
 
-#open a file and displays its content in a new tkinter window
-def openFile_asWindow(nomeFile):
-    newWindow = tk.Tk()
-    newWindow.geometry("300x600")
-    newWindow.title(nomeFile)
-    newWindow.resizable(True, True)
-    newWindow.configure(bg=colour_bg)
+statusCodes = {
+    0: "Update: waiting",
+    1: "Update: initialising analysis...",
+    2: "Update: saving session...",
+    3: "Update: loading session...",
+    4: "Update: opening profile...",
+    5: "Update: loading followees list...",
+    6: "Update: loading followers list...",
+    7: "Update: creating unrequited users list...",
+    8: "Update: creating fans list...",
+    201: "Update: session saved",
+    202: "Update: session loaded",
+    203: "Update: profile opened",
+    204: "Update: unrequited users list created",
+    205: "Update: fan users list created",
+    209: "Update: finished!",
+    401: "Error: unable to save the session.",
+    402: "Error: unable to load the session.",
+    403: "Error: unable to open the profile.",
+    404: "Error: unable to create unrequited users list.",
+    405: "Error: unable to create fan users list.",
+    701: "Update: loading followees list... ",
+    702: "Update: loading followees list... ",
+}
 
-    file = open(nomeFile,"r")
+appStatus = None
+def updateStatus(code):
+    """
+    Prints the status of the analysis and
+    updates the status of the app if present
+    """
+    print(statusCodes[code])
+    if appStatus != None:
+        appStatus.UpdateStatus(code)
 
-    scrollbar = tk.Scrollbar(newWindow)
-    scrollbar.pack( side = tk.RIGHT, fill = tk.Y )
-    text = tk.Text(newWindow, yscrollcommand = scrollbar.set, bg=colour_bg, fg=colour_text, font=("Arial", 15, "italic"))
-    for line in file:
-        text.insert(tk.END, str(line))
-    text.pack( side = tk.LEFT, fill = tk.BOTH )
-    scrollbar.config(command = text.yview )
+def executeAnalysis(loggedUsername, usernameToAnalyze, myApp = None):
+    """
+    Executes the analysis of the user, takes as arguments:
+    - usernames of the logged user and the user to analyze
+    - app status if ran by the gui app
+    """
+    global appStatus
+    appStatus = myApp
 
-    newWindow.update()
-
-# the following 4 functions call openFile_asWindow with the respective name file required
-def openFanFile_asWindow():
-    nomeUtenteDaAnalizzare = box_nomeUtenteDaAnalizzare.get(1.0, "end-1c")
-    openFile_asWindow(nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputFan+".txt")
-
-def openUnrequitedFile_asWindow():
-    nomeUtenteDaAnalizzare = box_nomeUtenteDaAnalizzare.get(1.0, "end-1c")
-    openFile_asWindow(nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputUnrequited+".txt")
-
-def openFollowersFile_asWindow():
-    nomeUtenteDaAnalizzare = box_nomeUtenteDaAnalizzare.get(1.0, "end-1c")
-    openFile_asWindow(nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowers+".txt")
-
-def openFolloweesFile_asWindow():
-    nomeUtenteDaAnalizzare = box_nomeUtenteDaAnalizzare.get(1.0, "end-1c")
-    openFile_asWindow(nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowees+".txt")
-
-#copies src content in dst
-def copyFile(src_name, dst_name):
-    dst = open(dst_name, "w")
-    try:
-        src = open(src_name, "r")
-    except:
-        update.config(text = "Update: no previous analysis on this account...")
-        window.update()
-    else:    
-        for line in src:
-            dst.write(str(line))
-        src.close()
-
-    dst.close()
-
-# get resource path for pyinstaller https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
-def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
-#END UTILITIES-------------------------------------------------------------------
-
-#TOOL----------------------------------------------------------------------------
-def executeAnalysis():
-    update.config(text = "Update: initialising analysis...", fg=colour_text)
-    window.update()
-
+    updateStatus(1)
     # gets the usernames fron the text boxes in the window
-    nomeUtenteLoginato = box_nomeUtenteLoginato.get(1.0, "end-1c")
-    nomeUtenteDaAnalizzare = box_nomeUtenteDaAnalizzare.get(1.0, "end-1c")
+    nomeUtenteLoginato = loggedUsername
+    nomeUtenteDaAnalizzare = usernameToAnalyze
     
-    nomeFileElencoFollowees = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowees+".txt"
-    nomeFileElencoFollowers = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowers+".txt"
-    nomeFileOutputUnrequited = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputUnrequited+".txt"
-    nomeFileOutputFan = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputFan+".txt"
-
-    update.config(text = "Update: saving session...")
-    window.update()
+    fileName_followees = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowees+".txt"
+    fileName_followers = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowers+".txt"
+    fileName_unrequited = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputUnrequited+".txt"
+    fileName_fan = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputFan+".txt"
+    list_newFollow = []
+    list_newUnfollow = []
 
     # saves the current firefox session to access instagram
+    updateStatus(2)
     try:
         saveSession()
     except:
-#        print("Impossibile salvare la sessione")
-        update.config(text = "Error: unable to save the session.", fg=colour_text_error)
+        updateStatus(401)
         return
     else:
-#       print("Sessione salvata")
-        update.config(text = "Update: session saved")
-    window.update()
-
-    update.config(text = "Update: loading session...")
-    window.update()
+        updateStatus(201)
 
     # load the instagram session saved before with instaloader
+    updateStatus(3)
     L = instaloader.Instaloader()
     try:
         L.load_session_from_file(nomeUtenteLoginato)
     except:
-#        print("Impossibile caricare la sessione")
-        update.config(text = "Error: unable to load the session.", fg=colour_text_error)
+        updateStatus(402)
         return
     else:
-#        print("Sessione caricata")
-        update.config(text = "Update: session loaded")
-    window.update()
-
-    update.config(text = "Update: opening profile...")
-    window.update()
+        updateStatus(202)
 
     # opens the profile we want to do the analysis on
+    updateStatus(4)
     try:
         profile = instaloader.Profile.from_username(L.context,nomeUtenteDaAnalizzare)
     except:
-#        print("Impossibile aprire profilo")
-        update.config(text = "Error: unable to open the profile.", fg=colour_text_error)
+        updateStatus(403)
         return
     else:
-#        print("Profilo di "+str(profile.username)+" aperto")
-        update.config(text = "Update: "+str(profile.username)+"'s profile opened") #LU E' CORRETTO????????????????????????????
-    window.update()
-
-    update.config(text = "Update: loading followees list...")
-    window.update()
+        updateStatus(203)
 
     # creates a file with a list of all the followees of that user
+    updateStatus(701)
     followeesList = profile.get_followees()
-#    print("Followees: "+str(followeesList.count))
-    writeListToFile(nomeFileElencoFollowees,followeesList,followeesList.count,"followees")
-
-    update.config(text = "Update: loading followers list...")
-    window.update()
+    FileUtils.writeListToFile(fileName_followees,followeesList,followeesList.count,appStatus)
 
     # creates a file with a list of all the followers of that user
+    updateStatus(702)
     followersList = profile.get_followers()
-#    print("Followers: "+str(followersList.count))
-    copyFile(nomeFileElencoFollowers,"old.txt")
-    writeListToFile(nomeFileElencoFollowers,followersList,followersList.count,"followers")
+    FileUtils.copyFile(fileName_followers,"old.txt")
+    FileUtils.writeListToFile(fileName_followers,followersList,followersList.count,appStatus)
 
     #updates the two displayed lists with the new followers and unfollows
-    compareFiles_forNewFollowUnfollow("old.txt",nomeFileElencoFollowers,list1)
-    compareFiles_forNewFollowUnfollow(nomeFileElencoFollowers,"old.txt",list2)
-
-    update.config(text = "Update: creating unrequited users list...")
-    window.update()
+    list_newFollow = FileUtils.compareFiles_toList("old.txt",fileName_followers)
+    list_newUnfollow = FileUtils.compareFiles_toList(fileName_followers,"old.txt")
 
     # compares the two files generated before and creates another one with the list of all the unrequited users
+    updateStatus(7)
     try:
-        compareFiles(nomeFileElencoFollowers,nomeFileElencoFollowees,nomeFileOutputUnrequited)
+        FileUtils.compareFiles_toFile(fileName_followers,fileName_followees,fileName_unrequited)
     except:
-#        print("Impossibile creare file non ricambianti")
-        update.config(text = "Error: unable to create unrequited users list.", fg=colour_text_error)
+        updateStatus(404)
         return
     else:
-#        print("File non ricambianti creato")
-        update.config(text = "Update: unrequited users list created")
-    window.update()
-
-    update.config(text = "Update: creating fans list...")
-    window.update()
+        updateStatus(204)
 
     # compares the two files generated before and creates another one with the list of all the users that our user don't follow back
+    updateStatus(8)
     try:
-        compareFiles(nomeFileElencoFollowees,nomeFileElencoFollowers,nomeFileOutputFan)
+        FileUtils.compareFiles_toFile(fileName_followees,fileName_followers,fileName_fan)
     except:
-#        print("Impossibile creare file fan")
-        update.config(text = "Error: unable to create fan users list.", fg=colour_text_error)
+        updateStatus(405)
         return
     else:
-#        print("File dei fan creato")
-        update.config(text = "Update: fan users list created")
-    window.update()
+        updateStatus(205)
+    
+    updateStatus(209)
+    print("Nome file followees: "+fileName_followees)
+    print("Nome file followers: "+fileName_followers)
+    print("Nome file unrequited: "+fileName_unrequited)
+    print("Nome file fan: "+fileName_fan)
+    print("Nuovi follow: "+str(list_newFollow))
+    print("Nuovi unfollow: "+str(list_newUnfollow))
+    return fileName_fan, fileName_unrequited, fileName_followers, fileName_followees, list_newFollow, list_newUnfollow
 
-    update.config(text = "Update: finished!", fg=colour_text_success)
-
-    window.update()
-#END TOOL------------------------------------------------------------------------
-
-
-# initialising window
-window = tk.Tk()
-window.geometry("750x580")
-window.title("Insta tool")
-window.resizable(True, True)
-window.configure(background=colour_bg)
-
-print(sys._MEIPASS)
-icon_path = resource_path("rsc/InstaTool_icon.png")
-
-try:
-    icon = tk.PhotoImage(file = icon_path)
-except:
-    print("impossible to load icon")
-else:
-    window.iconphoto(False,icon)
-
-#Instructions
-title = tk.Label(master=window,text="Insta-Tool",fg=colour_text_error,bg=colour_bg,font=("Arial", 14))
-title.pack(side=tk.TOP)
-text = tk.Label(master=window,text="To run the program you need to login to your Instagram account using the Firefox web browser\n"+
-                    "-In the 'Logged username' box you need to insert your username\n"+
-                    "-In the 'Username to analyze' box you have to insert the username of the account you want to analyze\n"+
-                    "In order for it to work this account must be public or followed by the logged in user (it can be yourself if you want to analyze your account)\n"+
-                    "Once you put the correct usernames in the boxes click 'Run' and wait for the results wich will be saved in 4 text files",bg=colour_bg,fg=colour_text)
-text.pack(side=tk.TOP)
-
-# textbox to input usernames
-frame_input = tk.Frame(window, bg=colour_bg2,height=40)
-frame_input.pack(side = tk.TOP,pady=15,fill=tk.Y)
-text_nomeUtenteLoginato = tk.Label(frame_input, text="Logged username:",bg=colour_bg2,fg=colour_text, font=("Arial", 11))
-text_nomeUtenteLoginato.grid(row=0,column=0,pady=3, padx=3)
-box_nomeUtenteLoginato = tk.Text(frame_input, height = 1, width = 20)
-box_nomeUtenteLoginato.insert(0.0,"insert username")
-box_nomeUtenteLoginato.grid(row=0,column=1,pady=3,padx = 5)
-
-text_nomeUtenteDaAnalizzare = tk.Label(frame_input, text="Username to analyze:",bg=colour_bg2,fg=colour_text, font=("Arial", 11))
-text_nomeUtenteDaAnalizzare.grid(row=1,column=0,pady=3,padx=3)
-box_nomeUtenteDaAnalizzare = tk.Text(frame_input, height = 1, width = 20)
-box_nomeUtenteDaAnalizzare.insert(0.0,"insert username")
-box_nomeUtenteDaAnalizzare.grid(row=1,column=1,pady=3,padx = 5)
-
-# button to start the analysis
-run_button = tk.Button(master=window,text="Run", command=executeAnalysis,bg=colour_text_success)
-run_button.pack(side = tk.TOP)
-
-# update label (used when the analysis runs)
-update = tk.Label(window, text="Update: waiting", background=colour_bg, fg=colour_text, font=("Arial", 11))
-update.pack(side=tk.TOP)
-
-# frame and buttons to open the lists
-frame_FileButtons = tk.Frame(window, bg = colour_azzurro)
-frame_FileButtons.pack(side=tk.TOP,pady=10)
-
-followers_button = tk.Button(master=frame_FileButtons,text="Followers list", command=openFollowersFile_asWindow)
-followers_button.grid(row=0, column=0, sticky="nsew", padx = 20, pady=10)
-followees_button = tk.Button(master=frame_FileButtons,text="Followees list", command=openFolloweesFile_asWindow)
-followees_button.grid(row=0, column=1, sticky="nsew", padx = 20, pady=10)
-fans_button = tk.Button(master=frame_FileButtons,text="Fans list", command=openFanFile_asWindow)
-fans_button.grid(row=1, column=0, sticky="nsew", padx = 20, pady=10)
-unrequited_button = tk.Button(master=frame_FileButtons,text="Unrequited list", command=openUnrequitedFile_asWindow)
-unrequited_button.grid(row=1, column=1, sticky="nsew", padx = 20, pady=10)
-
-# frame and lists to show new follows/unfollows
-frame_newFollowUnfollows = tk.Frame(window, bg = colour_bg2, width=300, height=70)
-frame_newFollowUnfollows.pack(side = tk.TOP)
-
-frame_unfollow = tk.Frame(frame_newFollowUnfollows, bg = colour_bg2)
-frame_unfollow.pack(side=tk.LEFT, pady=10,padx=25, fill=tk.X)
-list1_title = tk.Label(frame_unfollow, text="New followers: ", bg=colour_bg2, fg=colour_text, font=("Arial", 11))
-list1_title.pack(side = tk.TOP)
-frame_unfollow_list = tk.Frame(frame_unfollow, bg = colour_bg2)
-frame_unfollow_list.pack(side = tk.TOP)
-list1_scrollbar = tk.Scrollbar(frame_unfollow_list)
-list1 = tk.Listbox(frame_unfollow_list, yscrollcommand = list1_scrollbar.set)
-list1_scrollbar.config(command = list1.yview)
-list1.pack(side = tk.LEFT)
-list1_scrollbar.pack(side = tk.RIGHT, fill = tk.Y )
-
-frame_follow = tk.Frame(frame_newFollowUnfollows,bg = colour_bg2)
-frame_follow.pack(side=tk.RIGHT, pady=10,padx=25, fill=tk.X)
-list2_title = tk.Label(frame_follow, text="New unfollows: ", bg=colour_bg2, fg=colour_text, font=("Arial", 11))
-list2_title.pack(side = tk.TOP)
-frame_follow_list = tk.Frame(frame_follow,bg = colour_bg2)
-frame_follow_list.pack(side = tk.TOP)
-list2_scrollbar = tk.Scrollbar(frame_follow_list)
-list2 = tk.Listbox(frame_follow_list,  yscrollcommand = list2_scrollbar.set)
-list2_scrollbar.config(command = list2.yview)
-list2.pack(side = tk.LEFT)
-list2_scrollbar.pack(side = tk.RIGHT,  fill = tk.Y )
-
-# credits
-crediti = tk.Label(window,text="2024 Francesco Bittasi")
-crediti.pack(side = tk.RIGHT)
-
-# main loop (runs the program)
+# decomment this to run the script from the terminal
+"""
 if __name__ == "__main__":
-    window.mainloop()
-
-# pyinstaller --name InstaTool --onefile --windowed --icon=resources/InstaTool_icon.ico src/InstaTool.py
+    if len(sys.argv) != 3:
+        print("Usage: InstaTool.py <loggedUsername> <usernameToAnalyze>")
+    else:
+        executeAnalysis(sys.argv[1],sys.argv[2])
+"""
