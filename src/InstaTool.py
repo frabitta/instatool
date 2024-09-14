@@ -1,6 +1,7 @@
 import instaloader
 import tkinter as tk
 import sys
+import os
 
 # name of the generated files
 BASE_nomeFileElencoFollowees = "Followees_list"
@@ -163,6 +164,16 @@ def copyFile(src_name, dst_name):
 
     dst.close()
 
+# get resource path for pyinstaller https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 #END UTILITIES-------------------------------------------------------------------
 
 #TOOL----------------------------------------------------------------------------
@@ -290,9 +301,10 @@ window.resizable(True, True)
 window.configure(background=colour_bg)
 
 print(sys._MEIPASS)
+icon_path = resource_path("rsc/InstaTool_icon.png")
 
 try:
-    icon = tk.PhotoImage(file = 'InstaTool_icon.png')
+    icon = tk.PhotoImage(file = icon_path)
 except:
     print("impossible to load icon")
 else:
