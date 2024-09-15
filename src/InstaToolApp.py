@@ -1,9 +1,10 @@
 import tkinter as tk
 import sys
 import os
-import InstaTool
 import threading
 import time
+import InstaTool
+import FileUtils
 
 # colours used
 colour_bg = "#F2F2F2"
@@ -46,7 +47,7 @@ def openFile_asWindow(nomeFile):
     newWindow.resizable(True, True)
     newWindow.configure(bg=colour_bg)
 
-    file = open(nomeFile,"r")
+    file = FileUtils.openFileFromDataDir(nomeFile,"r")
 
     scrollbar = tk.Scrollbar(newWindow)
     scrollbar.pack( side = tk.RIGHT, fill = tk.Y )

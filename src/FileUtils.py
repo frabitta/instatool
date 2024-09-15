@@ -1,8 +1,25 @@
-def writeListToFile(nomefile,lista,tot,status):
+import os
+# Create a directory in the user's home directory to store data
+home = os.path.expanduser("~")
+data = os.path.join(home, ".instatool")
+print(data)
+os.makedirs(data, exist_ok=True)
+
+"""
+# Create a file in the data directory
+f = open(os.path.join(data,"fileName"), mode="w")
+f.write("toto")
+"""
+
+def openFileFromDataDir(nomeFile, m):
+    f = open(os.path.join(data,nomeFile), mode=m)
+    return f
+
+def writeListToFile(nomeFile,lista,tot,status):
     """
     takes a list and print that on a file with the name specified
     """
-    f = open(nomefile,"w")
+    f = openFileFromDataDir(nomeFile, "w")
     i = 1
     for x in lista:
         f.write(str(x.username)+"\n")
@@ -16,10 +33,10 @@ def compareFiles_toFile(nomeFile1,nomeFile2,nomeFileOutput):
     """
     prints on nomeFileOutput every line of file2 that's not incuded in file1
     """
-    file1 = open(nomeFile1,"r")
-    file2 = open(nomeFile2,"r")
+    file1 = openFileFromDataDir(nomeFile1, "r")
+    file2 = openFileFromDataDir(nomeFile2, "r")
     list = file1.read()
-    fileOutput = open(nomeFileOutput,"w")
+    fileOutput = openFileFromDataDir(nomeFileOutput, "w")
     for line in file2:
         if line not in list:
             fileOutput.write(str(line))
@@ -31,8 +48,8 @@ def compareFiles_toList(nomeFile1,nomeFile2):
     """
     returns a list made of the lines in file2 not included in file1
     """
-    file1 = open(nomeFile1,"r")
-    file2 = open(nomeFile2,"r")
+    file1 = openFileFromDataDir(nomeFile1, "r")
+    file2 = openFileFromDataDir(nomeFile2, "r")
     list_f1 = file1.read()
     difference = []
     for line in file2:
@@ -46,9 +63,9 @@ def copyFile(src_name, dst_name):
     """
     copies src content in dst
     """
-    dst = open(dst_name, "w")
+    dst = openFileFromDataDir(dst_name, "w")
     try:
-        src = open(src_name, "r")
+        src = openFileFromDataDir(src_name, "r")
     except:
         print("Update: no previous analysis on this account...")
         return
