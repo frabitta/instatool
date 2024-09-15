@@ -24,6 +24,9 @@ list_newFollow = None
 list_newUnfollow = None
 updateLabelText = InstaTool.getStatusCodes()
 
+# a list of all the started threads
+threads = []
+
 def resource_path(relative_path):
     """
     Get absolute path to resource, works for dev and for PyInstaller
@@ -60,6 +63,29 @@ def openFile_asWindow(nomeFile):
 
     newWindow.update()
 
+def saveMemory(loggedUsername, usernameToAnalyze):
+    """
+    saves the usernames in a file
+    """
+    f = FileUtils.openFileFromDataDir("memory.txt","w")
+    f.write(loggedUsername+"\n")
+    f.write(usernameToAnalyze+"\n")
+    f.close()
+
+def readMemory():
+    """
+    reads the usernames from a file
+    """
+    try:
+        f = FileUtils.openFileFromDataDir("memory.txt","r")
+        loggedUsername = f.readline()[:-1]
+        usernameToAnalyze = f.readline()[:-1]
+        f.close()
+    except:
+        loggedUsername = "insert username"
+        usernameToAnalyze = "insert username"
+    return loggedUsername, usernameToAnalyze
+
 class ReturnableThread(threading.Thread):
     """
     This class is a subclass of Thread that allows the thread to return a value.
@@ -79,11 +105,14 @@ def StartAnalysis():
     """
     loggedUsername = box_nomeUtenteLoginato.get(1.0, "end-1c")
     usernameToAnalyze = box_nomeUtenteDaAnalizzare.get(1.0, "end-1c")
-    
+    saveMemory(loggedUsername, usernameToAnalyze)
+
     analyzer = ReturnableThread(target=lambda: InstaTool.executeAnalysis(loggedUsername, usernameToAnalyze, myApp = status))
     refresher = threading.Thread(target=lambda: Refresher(analyzer))
     analyzer.start()
     refresher.start()
+    threads.append(analyzer)
+    threads.append(refresher)
 
 # status of the app
 class AppStatus:
@@ -102,18 +131,21 @@ def UpdateLabel():
     Updates the label with the status of the app
     """
     global oldCode
-    if status.code != oldCode:
-        color = colour_text
-        if status.code>200 and status.code<400:
-            color = colour_text_success
-        elif status.code>400 and status.code<500:
-            color = colour_text_error
-        update.config(text = updateLabelText[status.code], fg=color)
-        window.update()
-        oldCode = status.code
-    if status.code > 700:
-        update.config(text = updateLabelText[status.code]+" "+str(round(status.perc))+"%")
-        window.update()
+    try:
+        if status.code != oldCode:
+            color = colour_text
+            if status.code>200 and status.code<400:
+                color = colour_text_success
+            elif status.code>400 and status.code<500:
+                color = colour_text_error
+            update.config(text = updateLabelText[status.code], fg=color)
+            window.update()
+            oldCode = status.code
+        if status.code > 700:
+            update.config(text = updateLabelText[status.code]+" "+str(round(status.perc))+"%")
+            window.update()
+    except:
+        print("Error in updating the label")
 
 def Refresher(analyzerThread):
     """
@@ -123,7 +155,11 @@ def Refresher(analyzerThread):
     oldCode = 0
     while analyzerThread.is_alive():
         UpdateLabel()
+        print("still alive")
         time.sleep(0.1)
+    print("Exited while")
+    analyzerThread.join()
+    print("Joined")
     UpdateLabel()
     try:
         fileName_fan, fileName_unrequited, fileName_followers, fileName_followees, list_newFollow, list_newUnfollow = analyzerThread.result
@@ -135,6 +171,8 @@ def Refresher(analyzerThread):
             list2.insert(tk.END, str(line))
     except:
         print("Error in getting the results")
+    print("Terminated")
+    return
 
 
 # APP GUI -----------------------------------------------------------------------------------------------
@@ -154,8 +192,8 @@ except:
 else:
     window.iconphoto(False,icon)
 
-#Instructions
-title = tk.Label(master=window,text="Insta-Tool",fg=colour_text_error,bg=colour_bg,font=("Arial", 14))
+# Instructions
+title = tk.Label(master=window,text="InstaTool",fg=colour_text_error,bg=colour_bg,font=("Arial", 14))
 title.pack(side=tk.TOP)
 text = tk.Label(master=window,text="To run the program you need to login to your Instagram account using the Firefox web browser\n"+
                     "-In the 'Logged username' box you need to insert your username\n"+
@@ -165,18 +203,19 @@ text = tk.Label(master=window,text="To run the program you need to login to your
 text.pack(side=tk.TOP)
 
 # textbox to input usernames
+loggedUsername, usernameToAnalyze  = readMemory()
 frame_input = tk.Frame(window, bg=colour_bg2,height=40)
 frame_input.pack(side = tk.TOP,pady=15,fill=tk.Y)
 text_nomeUtenteLoginato = tk.Label(frame_input, text="Logged username:",bg=colour_bg2,fg=colour_text, font=("Arial", 11))
 text_nomeUtenteLoginato.grid(row=0,column=0,pady=3, padx=3)
 box_nomeUtenteLoginato = tk.Text(frame_input, height = 1, width = 20)
-box_nomeUtenteLoginato.insert(0.0,"insert username")
+box_nomeUtenteLoginato.insert(0.0,loggedUsername)
 box_nomeUtenteLoginato.grid(row=0,column=1,pady=3,padx = 5)
 
 text_nomeUtenteDaAnalizzare = tk.Label(frame_input, text="Username to analyze:",bg=colour_bg2,fg=colour_text, font=("Arial", 11))
 text_nomeUtenteDaAnalizzare.grid(row=1,column=0,pady=3,padx=3)
 box_nomeUtenteDaAnalizzare = tk.Text(frame_input, height = 1, width = 20)
-box_nomeUtenteDaAnalizzare.insert(0.0,"insert username")
+box_nomeUtenteDaAnalizzare.insert(0.0,usernameToAnalyze)
 box_nomeUtenteDaAnalizzare.grid(row=1,column=1,pady=3,padx = 5)
 
 # button to start the analysis
@@ -232,6 +271,16 @@ list2_scrollbar.pack(side = tk.RIGHT,  fill = tk.Y )
 # credits
 crediti = tk.Label(window,text="2024 Francesco Bittasi")
 crediti.pack(side = tk.RIGHT)
+
+# handles the closing of the window
+def on_closing():
+    window.destroy()
+    print("closing...")
+    for t in threads:
+        t.join()
+    print("all threads closed")
+    sys.exit(0)
+window.protocol("WM_DELETE_WINDOW", on_closing)
 
 # main loop (runs the program)
 if __name__ == "__main__":

@@ -2,7 +2,6 @@ import os
 # Create a directory in the user's home directory to store data
 home = os.path.expanduser("~")
 data = os.path.join(home, ".instatool")
-print(data)
 os.makedirs(data, exist_ok=True)
 
 """
@@ -14,6 +13,9 @@ f.write("toto")
 def openFileFromDataDir(nomeFile, m):
     f = open(os.path.join(data,nomeFile), mode=m)
     return f
+
+def deleteFileFromDataDir(nomeFile):
+    os.remove(os.path.join(data,nomeFile))
 
 def writeListToFile(nomeFile,lista,tot,status):
     """

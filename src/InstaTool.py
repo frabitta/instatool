@@ -177,6 +177,7 @@ def executeAnalysis(loggedUsername, usernameToAnalyze, myApp = None):
     else:
         updateStatus(205)
     
+    FileUtils.deleteFileFromDataDir("old.txt")
     updateStatus(209)
     print("Nome file followees: "+fileName_followees)
     print("Nome file followers: "+fileName_followers)
