@@ -5,6 +5,7 @@ import threading
 import time
 import InstaTool
 import FileUtils
+from tkinter import messagebox
 
 # colours used
 colour_bg = "#F2F2F2"
@@ -44,13 +45,19 @@ def openFile_asWindow(nomeFile):
     """
     open a file and displays its content in a new tkinter window
     """
+    try:
+        file = FileUtils.openFileFromDataDir(nomeFile,"r")
+    except:
+        print("Error in opening the file")
+        messagebox.showerror("Error", "Error in opening the file")
+        return
+
     newWindow = tk.Tk()
     newWindow.geometry("300x600")
     newWindow.title(nomeFile)
     newWindow.resizable(True, True)
     newWindow.configure(bg=colour_bg)
 
-    file = FileUtils.openFileFromDataDir(nomeFile,"r")
 
     scrollbar = tk.Scrollbar(newWindow)
     scrollbar.pack( side = tk.RIGHT, fill = tk.Y )
@@ -62,6 +69,13 @@ def openFile_asWindow(nomeFile):
     scrollbar.config(command = text.yview )
 
     newWindow.update()
+
+def updateFileNames():
+    """
+    updates the file names
+    """
+    global fileName_fan, fileName_unrequited, fileName_followers, fileName_followees
+    fileName_followees, fileName_followers, fileName_unrequited, fileName_fan = InstaTool.generateFilesNames(box_nomeUtenteDaAnalizzare.get(1.0, "end-1c"))
 
 def saveMemory(loggedUsername, usernameToAnalyze):
     """
@@ -155,11 +169,8 @@ def Refresher(analyzerThread):
     oldCode = 0
     while analyzerThread.is_alive():
         UpdateLabel()
-        print("still alive")
         time.sleep(0.1)
-    print("Exited while")
     analyzerThread.join()
-    print("Joined")
     UpdateLabel()
     try:
         fileName_fan, fileName_unrequited, fileName_followers, fileName_followees, list_newFollow, list_newUnfollow = analyzerThread.result
@@ -171,7 +182,6 @@ def Refresher(analyzerThread):
             list2.insert(tk.END, str(line))
     except:
         print("Error in getting the results")
-    print("Terminated")
     return
 
 
@@ -231,13 +241,13 @@ update.pack(side=tk.TOP)
 frame_FileButtons = tk.Frame(window, bg = colour_azzurro)
 frame_FileButtons.pack(side=tk.TOP,pady=10)
 
-followers_button = tk.Button(master=frame_FileButtons,text="Followers list", command=lambda: openFile_asWindow(fileName_followers))
+followers_button = tk.Button(master=frame_FileButtons,text="Followers list", command=lambda: (updateFileNames(), openFile_asWindow(fileName_followers)))
 followers_button.grid(row=0, column=0, sticky="nsew", padx = 20, pady=10)
-followees_button = tk.Button(master=frame_FileButtons,text="Followees list", command=lambda: openFile_asWindow(fileName_followees))
+followees_button = tk.Button(master=frame_FileButtons,text="Followees list", command=lambda: (updateFileNames(), openFile_asWindow(fileName_followees)))
 followees_button.grid(row=0, column=1, sticky="nsew", padx = 20, pady=10)
-fans_button = tk.Button(master=frame_FileButtons,text="Fans list", command=lambda: openFile_asWindow(fileName_fan))
+fans_button = tk.Button(master=frame_FileButtons,text="Fans list", command=lambda: (updateFileNames(), openFile_asWindow(fileName_fan)))
 fans_button.grid(row=1, column=0, sticky="nsew", padx = 20, pady=10)
-unrequited_button = tk.Button(master=frame_FileButtons,text="Unrequited list", command=lambda: openFile_asWindow(fileName_unrequited))
+unrequited_button = tk.Button(master=frame_FileButtons,text="Unrequited list", command=lambda: (updateFileNames(), openFile_asWindow(fileName_unrequited)))
 unrequited_button.grid(row=1, column=1, sticky="nsew", padx = 20, pady=10)
 
 # frame and lists to show new follows/unfollows
@@ -275,10 +285,8 @@ crediti.pack(side = tk.RIGHT)
 # handles the closing of the window
 def on_closing():
     window.destroy()
-    print("closing...")
     for t in threads:
         t.join()
-    print("all threads closed")
     sys.exit(0)
 window.protocol("WM_DELETE_WINDOW", on_closing)
 

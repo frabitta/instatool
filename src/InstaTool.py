@@ -90,6 +90,16 @@ def updateStatus(code):
     if appStatus != None:
         appStatus.UpdateStatus(code)
 
+def generateFilesNames(username):
+    """
+    Generates the names of the files that will be created
+    """
+    fileName_followees = username+"_"+BASE_nomeFileElencoFollowees+".txt"
+    fileName_followers = username+"_"+BASE_nomeFileElencoFollowers+".txt"
+    fileName_unrequited = username+"_"+BASE_nomeFileOutputUnrequited+".txt"
+    fileName_fan = username+"_"+BASE_nomeFileOutputFan+".txt"
+    return fileName_followees, fileName_followers, fileName_unrequited, fileName_fan
+
 def executeAnalysis(loggedUsername, usernameToAnalyze, myApp = None):
     """
     Executes the analysis of the user, takes as arguments:
@@ -104,10 +114,7 @@ def executeAnalysis(loggedUsername, usernameToAnalyze, myApp = None):
     nomeUtenteLoginato = loggedUsername
     nomeUtenteDaAnalizzare = usernameToAnalyze
     
-    fileName_followees = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowees+".txt"
-    fileName_followers = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileElencoFollowers+".txt"
-    fileName_unrequited = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputUnrequited+".txt"
-    fileName_fan = nomeUtenteDaAnalizzare+"_"+BASE_nomeFileOutputFan+".txt"
+    fileName_followees, fileName_followers, fileName_unrequited, fileName_fan = generateFilesNames(nomeUtenteDaAnalizzare)
     list_newFollow = []
     list_newUnfollow = []
 
