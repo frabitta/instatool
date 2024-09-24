@@ -58,7 +58,6 @@ def openFile_asWindow(nomeFile):
     newWindow.resizable(True, True)
     newWindow.configure(bg=colour_bg)
 
-
     scrollbar = tk.Scrollbar(newWindow)
     scrollbar.pack( side = tk.RIGHT, fill = tk.Y )
     text = tk.Text(newWindow, yscrollcommand = scrollbar.set, bg=colour_bg, fg=colour_text, font=("Arial", 15, "italic"))
