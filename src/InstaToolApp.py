@@ -174,10 +174,10 @@ def Refresher(analyzerThread):
     try:
         fileName_fan, fileName_unrequited, fileName_followers, fileName_followees, list_newFollow, list_newUnfollow = analyzerThread.result
         list1.delete(0,tk.END)
-        for line in list_newUnfollow:
+        for line in list_newFollow:
             list1.insert(tk.END, str(line))
         list2.delete(0,tk.END)
-        for line in list_newFollow:
+        for line in list_newUnfollow:
             list2.insert(tk.END, str(line))
     except:
         print("Error in getting the results")
