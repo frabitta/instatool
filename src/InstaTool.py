@@ -76,8 +76,8 @@ statusCodes = {
     403: "Error: unable to open the profile.",
     404: "Error: unable to create unrequited users list.",
     405: "Error: unable to create fan users list.",
-    701: "Update: loading followees list... ",
-    702: "Update: loading followees list... ",
+    701: "Update: loading followees list...",
+    702: "Update: loading followers list...",
 }
 
 appStatus = None
